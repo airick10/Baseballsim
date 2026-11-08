@@ -22,73 +22,138 @@ with open("e_rating.json", "r", encoding="utf-8") as file:
     
 basepath = [0,0,0]
 
+
 def extrabases(player):
+	# AGAINST RIGHT-HANDED PITCHERS
+
 	hr = player['s_hrvrhp']
-	h = player['s_hitvrhp'] - hr
-	tb = player['s_tbvrhp'] - (hr * 4)
+	h = round(player['s_hitvrhp'] - hr, 4)
+	tb = round(player['s_tbvrhp'] - (hr * 4), 4)
 
-	# Calculate extra bases from non-home-run hits
-	extra = tb - h
+	# h = Hits excluding home runs
+	# tb = Total bases excluding home runs
+	# Every non-HR hit must contribute 1 to 3 total bases
 
-	# Initial distribution (10:1 doubles to triples)
-	triple = extra / 12
-	double = triple * 10
-	single = h - double - triple
+	if h <= 0:
+		# No non-home-run hits available
+		single = 0
+		double = 0
+		triple = 0
 
-	# Enforce minimum of 1 single chance
-	if single < 1:
-	    single = 1
-	    triple = tb - (2 * h) + single
-	    double = (3 * h) - tb - (2 * single)
+	elif tb < h:
+		# Not enough total bases to support the hits
+		# Preserve hits by making them all singles
+		single = h
+		double = 0
+		triple = 0
+		print("WARNING vs RHP: TB less than hits", player['LastName'])
 
-	single = round(single, 4)
-	double = round(double, 4)
-	triple = round(triple, 4)
+	elif tb > (3 * h):
+		# Too many total bases for the available hits
+		# Even all triples cannot reach the original TB
+		single = 0
+		double = 0
+		triple = h
+		print("WARNING vs RHP: TB exceeds maximum", player['LastName'])
 
-	# Check whether the distribution is mathematically valid
-	if double < 0 or triple < 0 or h < 1:
-	    print("WARNING vs RHP:", player['LastName'], "H:", h, "TB:", tb, "Single:", single, "Double:", double, "Triple:", triple)
+	else:
+		# Calculate extra bases from non-home-run hits
+		extra = tb - h
+
+		# Initial distribution - 10:1 doubles to triples
+		# Each double adds 1 extra base
+		# Each triple adds 2 extra bases
+		# 10 doubles + 1 triple = 12 extra bases
+
+		triple = extra / 12
+		double = triple * 10
+		single = h - double - triple
+
+		# Enforce minimum of 1 single when possible
+		# With 1 single, maximum TB = 3*h - 2
+		if single < 1 and h >= 1 and tb <= (3 * h - 2):
+			single = 1
+			triple = tb - (2 * h) + single
+			double = (3 * h) - tb - (2 * single)
+
+		elif single < 0:
+			# Not enough hits to preserve the 10:1 ratio
+			# Allow zero singles while preserving HIT and TB
+			single = 0
+			triple = tb - (2 * h)
+			double = (3 * h) - tb
+
+	# Round final calculations
+	single = round(single, 1)
+	double = round(double, 1)
+	triple = round(triple, 1)
 
 	player['s_sivrhp'] = single
 	player['s_dovrhp'] = double
 	player['s_trvrhp'] = triple
 
 
-	single = 0
-	double = 0
-	triple = 0
+	# AGAINST LEFT-HANDED PITCHERS
+
 	hr = player['s_hrvlhp']
-	h = player['s_hitvlhp'] - hr
-	tb = player['s_tbvlhp'] - (hr * 4)
+	h = round(player['s_hitvlhp'] - hr, 4)
+	tb = round(player['s_tbvlhp'] - (hr * 4), 4)
 
-	# Calculate extra bases from non-home-run hits
-	extra = tb - h
+	# h = Hits excluding home runs
+	# tb = Total bases excluding home runs
 
-	# Initial distribution (10:1 doubles to triples)
-	triple = extra / 12
-	double = triple * 10
-	single = h - double - triple
+	if h <= 0:
+		# No non-home-run hits available
+		single = 0
+		double = 0
+		triple = 0
 
-	# Enforce minimum of 1 single chance
-	if single < 1:
-	    single = 1
-	    triple = tb - (2 * h) + single
-	    double = (3 * h) - tb - (2 * single)
+	elif tb < h:
+		# Not enough total bases to support the hits
+		single = h
+		double = 0
+		triple = 0
+		print("WARNING vs LHP: TB less than hits", player['LastName'])
 
-	single = round(single, 4)
-	double = round(double, 4)
-	triple = round(triple, 4)
+	elif tb > (3 * h):
+		# Too many total bases for the available hits
+		single = 0
+		double = 0
+		triple = h
+		print("WARNING vs LHP: TB exceeds maximum", player['LastName'])
 
-	# Check whether the distribution is mathematically valid
-	if double < 0 or triple < 0 or h < 1:
-	    print("WARNING vs LHP:", player['LastName'], "H:", h, "TB:", tb, "Single:", single, "Double:", double, "Triple:", triple)
+	else:
+		# Calculate extra bases from non-home-run hits
+		extra = tb - h
 
+		# Initial distribution - 10:1 doubles to triples
+		triple = extra / 12
+		double = triple * 10
+		single = h - double - triple
+
+		# Enforce minimum of 1 single when possible
+		if single < 1 and h >= 1 and tb <= (3 * h - 2):
+			single = 1
+			triple = tb - (2 * h) + single
+			double = (3 * h) - tb - (2 * single)
+
+		elif single < 0:
+			# Allow zero singles while preserving HIT and TB
+			single = 0
+			triple = tb - (2 * h)
+			double = (3 * h) - tb
+
+	# Round final calculations
+	single = round(single, 1)
+	double = round(double, 1)
+	triple = round(triple, 1)
 
 	player['s_sivlhp'] = single
 	player['s_dovlhp'] = double
 	player['s_trvlhp'] = triple
 
 	return player
+
     
 def lookup (x, type, category):
 	if type == "H":
@@ -138,236 +203,291 @@ def defenseformation(player):
 		arm = int(player['s_ho'])
 
 	return defensearray
-
-
     
 def diceroll (bat, pitch, score, inning, outs, currentdefense):
-	print("")
-	print(lookup(basepath[0],"H","LastName"), lookup(basepath[1],"H","LastName"), lookup(basepath[2],"H","LastName"))
+	nocatch = True
+	catchflag = True
+	while nocatch:
+		nocatch = True
+		print("")
+		print(lookup(basepath[0],"H","LastName"), lookup(basepath[1],"H","LastName"), lookup(basepath[2],"H","LastName"))
 
-	if (basepath[0] > 0 and basepath[1] == 0) or (basepath[1] > 0 and basepath[2] == 0):
-		outs = stealing(outs,currentdefense)
-		if outs == 3:
-			return outs
+		if (basepath[0] > 0 and basepath[1] == 0) or (basepath[1] > 0 and basepath[2] == 0):
+			outs = stealing(outs,currentdefense)
+			if outs == 3:
+				return outs
 
-	hitlastname = bat['LastName']
-	x = random.randint(1, 108)
-	# PITCHER CARD
-	if random.randint(1,1000) <= 500:
-		if pitch['Throws'] == "R":
-			batside = "L"
-			if (pitch['s_bpvrhp'] == "w"):
-				diamond = -1
-			else:
-				diamond = int(pitch['s_bpvrhp'])
-			k = pitch['s_sovrhp']
-			bb = pitch['s_bbvrhp']
-			si = pitch['s_sivrhp']
-			do = pitch['s_dovrhp']
-			tr = pitch['s_trvrhp']
-			hr = pitch['s_hrvrhp']
-			gidp = pitch['s_dpvrhp']
-		else:
-			batside = "R"
-			if (pitch['s_bpvlhp'] == "w"):
-				diamond = -1
-			else:
-				diamond = int(pitch['s_bpvlhp'])
-			k = pitch['s_sovlhp']
-			bb = pitch['s_bbvlhp']
-			si = pitch['s_sivlhp']
-			do = pitch['s_dovlhp']
-			tr = pitch['s_trvlhp']
-			hr = pitch['s_hrvlhp']
-			gidp = pitch['s_dpvlhp']
-		
-		lastname = pitch['LastName']
-		id = pitch['ID']
-		defensex = 30	
-
-		scope = [k, 
-		(k + bb), 
-		(bb + si),
-		(bb + si + hr),
-		(bb + si + hr + gidp),
-		(bb + si + hr + gidp + do),
-		(bb + si + hr + gidp + do + tr),
-		(bb + si + hr + gidp + do + tr + defensex),
-		]
-		
-		'''
-		if x > 0 and x <= scope[0]:
-			print(bat['LastName'], "Strikeout")
-		elif x > scope[0] and x <= scope[1]:
-			print(bat['LastName'], "Walk")
-		elif x > scope[1] and x <= scope[2]:
-			print(bat['LastName'], "Single")
-		elif x > scope[2] and x <= scope[3]:
-			print(bat['LastName'], "Home Run")
-		else:
-			print(bat['LastName'], "Groundout")
-		'''
-		
-		diamondx = random.randint(1, 108)
-		diamondcheck = True
-		if diamondx <= diamond:
-			if random.randint(1,20) < 11:
-				homerun(bat, pitch, basepath, score, inning)
-				print(hitlastname, "*Home Run")
-			else:
-				print(hitlastname, "*Fly Out")
-				outs += 1
-			diamondcheck = False
-		elif diamondx < (diamond + 8) and diamondx > diamond:
-			if random.randint(1,20) < 11:
-				outs = single(bat, pitch, basepath, True, score, inning, outs, batside, currentdefense)
-				print(hitlastname, "*Single")
-			else:
-				print(hitlastname, "*Lineout")
-				outs += 1
-			diamondcheck = False
-			
-	
-		if diamondcheck:
-			if x > 0 and x <= scope[0]:
-				print(hitlastname, "Strikeout")
-				outs += 1
-			elif x > scope[0] and x <= scope[1]:
-				walkhbp(bat, pitch, basepath, score, inning)
-				print(hitlastname, "Walk")
-			elif x > scope[1] and x <= scope[2]:
-				outs = single(bat, pitch, basepath, False, score, inning, outs, batside, currentdefense)
-				print(hitlastname, "Single")
-			elif x > scope[2] and x <= scope[3]:
-				homerun(bat, pitch, basepath, score, inning)
-				print(hitlastname, "Home Run")
-			elif x > scope[3] and x <= scope[4]:
-				outs = gbA(bat, pitch, basepath, score, inning, outs)
-				print(hitlastname, "GroundoutA")
-			elif x > scope[4] and x <= scope[5]:
-				outs = double(bat, pitch, basepath, False, score, inning, outs, batside, currentdefense)
-				print(hitlastname, "Double")
-			elif x > scope[5] and x <= scope[6]:
-				triple(bat, pitch, basepath, score, inning)
-				print(hitlastname, "Triple")
-			elif x > scope[6] and x <= scope[7]:
-				outs = xchart(bat, pitch, basepath, score, inning, outs, batside, currentdefense)
-				print(hitlastname, "Defense X Chart")
-			else:
-				x = random.randint(1, 1000)
-				if x >= 333:
-					outs = gbC(bat, pitch, basepath, score, inning, outs)
-					print(lastname, "GroundoutC")
-				else:
-					outs = gbB(bat, pitch, basepath, score, inning, outs)
-					print(lastname, "GroundoutB")
-		return outs
-	
-		#print(lookup(pitch["ID"], "P"))
-	
-	# HITTER CARD
-	else:
-		batside = bat['Bats']
-		if batside == "S":
+		hitlastname = bat['LastName']
+		x = random.randint(1, 108)
+		# PITCHER CARD
+		if random.randint(1,1000) <= 500:
 			if pitch['Throws'] == "R":
 				batside = "L"
+				if (pitch['s_bpvrhp'] == "w"):
+					diamond = -1
+				else:
+					diamond = int(pitch['s_bpvrhp'])
+				k = pitch['s_sovrhp']
+				bb = pitch['s_bbvrhp']
+				si = pitch['s_sivrhp']
+				do = pitch['s_dovrhp']
+				tr = pitch['s_trvrhp']
+				hr = pitch['s_hrvrhp']
+				gidp = pitch['s_dpvrhp']
 			else:
 				batside = "R"
-		if batside == "R":
-			if (bat['s_bpvrhp'] == "w"):
-				diamond = -1
-			else:
-				diamond = int(bat['s_bpvrhp'])
-			k = bat['s_sovrhp']
-			bb = bat['s_bbvrhp']
-			hr = bat['s_hrvrhp']
-			hbp = pitch['s_obvrhp'] - (pitch['s_hitvrhp'] + pitch['s_bbvrhp'])
-			si = pitch['s_sivrhp']
-			do = pitch['s_dovrhp']
-			tr = pitch['s_trvrhp']
-			gidp = bat['s_dpvrhp']
-		else:
-			if (bat['s_bpvlhp'] == "w"):
-				diamond = -1
-			else:
-				diamond = int(bat['s_bpvlhp'])
-			k = bat['s_sovlhp']
-			bb = bat['s_bbvlhp']
-			hr = bat['s_hrvlhp']
-			hbp = pitch['s_obvlhp'] - (pitch['s_hitvlhp'] + pitch['s_bbvlhp'])
-			si = pitch['s_sivlhp']
-			do = pitch['s_dovlhp']
-			tr = pitch['s_trvlhp']
-			gidp = bat['s_dpvlhp']
-	
-		lastname = bat['LastName']
-		id = bat['ID']
-	
-		scope = [k, 
-		(k + bb), 
-		(bb + si),
-		(bb + si + hbp), 
-		(bb + si + hbp + hr),
-		(bb + si + hbp + hr + gidp),
-		(bb + si + hbp + hr + gidp + do),
-		(bb + si + hbp + hr + gidp + do + tr)
-		]
-		
-		diamondx = random.randint(1, 108)
-		diamondcheck = True
-		if diamondx <= diamond:
-			if random.randint(1,20) < 11:
-				homerun(bat, pitch, basepath, score, inning)
-				print(lastname, "*Home Run")
-			else:
-				print(lastname, "*Fly Out")
-				outs += 1
-			diamondcheck = False
-		elif diamondx < (diamond + 8) and diamondx > diamond:
-			if random.randint(1,20) < 11:
-				outs = single(bat, pitch, basepath, True, score, inning, outs, batside, currentdefense)
-				print(lastname, "*Single")
-			else:
-				print(lastname, "*Groundout")
-				outs += 1
-			diamondcheck = False
-	
-		if diamondcheck:
-			if x > 0 and x <= scope[0]:
-				print(lastname, "Strikeout")
-				outs += 1
-			elif x > scope[0] and x <= scope[1]:
-				walkhbp(bat, pitch, basepath, score, inning)
-				print(lastname, "Walk")
-			elif x > scope[1] and x <= scope[2]:
-				outs = single(bat, pitch, basepath, False, score, inning, outs, batside, currentdefense)
-				print(lastname, "Single")
-			elif x > scope[2] and x <= scope[3]:
-				walkhbp(bat, pitch, basepath, score, inning)
-				print(lastname, "Hit by Pitch")
-			elif x > scope[3] and x <= scope[4]:
-				homerun(bat, pitch, basepath, score, inning)
-				print(lastname, "Home Run")
-			elif x > scope[4] and x <= scope[5]:
-				outs = gbA(bat, pitch, basepath, score, inning, outs)
-				print(lastname, "GroundoutA")
-			elif x > scope[5] and x <= scope[6]:
-				outs = double(bat, pitch, basepath, False, score, inning, outs, batside, currentdefense)
-				print(lastname, "Double")
-			elif x > scope[6] and x <= scope[7]:
-				triple(bat, pitch, basepath, score, inning)
-				print(lastname, "Triple")
-			else:
-				x = random.randint(1, 1000)
-				if x <= 333:
-					outs = gbC(bat, pitch, basepath, score, inning, outs)
-					print(lastname, "GroundoutC")
+				if (pitch['s_bpvlhp'] == "w"):
+					diamond = -1
 				else:
-					outs = gbB(bat, pitch, basepath, score, inning, outs)
-					print(lastname, "GroundoutB")
+					diamond = int(pitch['s_bpvlhp'])
+				k = pitch['s_sovlhp']
+				bb = pitch['s_bbvlhp']
+				si = pitch['s_sivlhp']
+				do = pitch['s_dovlhp']
+				tr = pitch['s_trvlhp']
+				hr = pitch['s_hrvlhp']
+				gidp = pitch['s_dpvlhp']
+			
+			lastname = pitch['LastName']
+			id = pitch['ID']
+			defensex = 30	
 
-		return outs
+			scope = [k, 
+			(k + bb), 
+			(bb + si),
+			(bb + si + hr),
+			(bb + si + hr + gidp),
+			(bb + si + hr + gidp + do),
+			(bb + si + hr + gidp + do + tr),
+			(bb + si + hr + gidp + do + tr + defensex),
+			]
+
+			
+			'''
+			if x > 0 and x <= scope[0]:
+				print(bat['LastName'], "Strikeout")
+			elif x > scope[0] and x <= scope[1]:
+				print(bat['LastName'], "Walk")
+			elif x > scope[1] and x <= scope[2]:
+				print(bat['LastName'], "Single")
+			elif x > scope[2] and x <= scope[3]:
+				print(bat['LastName'], "Home Run")
+			else:
+				print(bat['LastName'], "Groundout")
+			'''
+			
+			diamondx = random.randint(1, 108)
+			diamondcheck = True
+			if diamondx <= diamond:
+				if random.randint(1,20) < 11:
+					homerun(bat, pitch, basepath, score, inning)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					box_score(bat, pitch, basepath, "HR")
+					box_score(bat, pitch, basepath, "RBI")
+					print(hitlastname, "*Home Run")
+				else:
+					box_score(bat, pitch, basepath, score, inning)
+					print(hitlastname, "*Fly Out")
+					outs += 1
+				diamondcheck = False
+			elif diamondx < (diamond + 8) and diamondx > diamond:
+				if random.randint(1,20) < 11:
+					outs = single(bat, pitch, basepath, True, score, inning, outs, batside, currentdefense)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					print(hitlastname, "*Single")
+				else:
+					box_score(bat, pitch, basepath, "AB")
+					print(hitlastname, "*Lineout")
+					outs += 1
+				diamondcheck = False
+				
 		
+			if diamondcheck:
+				if x > 0 and x <= scope[0]:
+					box_score(bat, pitch, basepath, "AB")
+					print(hitlastname, "Strikeout")
+					outs += 1
+				elif x > scope[0] and x <= scope[1]:
+					box_score(bat, pitch, basepath, "BB")
+					walkhbp(bat, pitch, basepath, score, inning)
+					print(hitlastname, "Walk")
+				elif x > scope[1] and x <= scope[2]:
+					outs = single(bat, pitch, basepath, False, score, inning, outs, batside, currentdefense)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					print(hitlastname, "Single")
+				elif x > scope[2] and x <= scope[3]:
+					homerun(bat, pitch, basepath, score, inning)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					box_score(bat, pitch, basepath, "HR")
+					box_score(bat, pitch, basepath, "RBI")
+					print(hitlastname, "Home Run")
+				elif x > scope[3] and x <= scope[4]:
+					outs = gbA(bat, pitch, basepath, score, inning, outs)
+					box_score(bat, pitch, basepath, "AB")
+					print(hitlastname, "GroundoutA")
+				elif x > scope[4] and x <= scope[5]:
+					outs = double(bat, pitch, basepath, False, score, inning, outs, batside, currentdefense)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					print(hitlastname, "Double")
+				elif x > scope[5] and x <= scope[6]:
+					triple(bat, pitch, basepath, score, inning)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					print(hitlastname, "Triple")
+				elif x > scope[6] and x <= scope[7]:
+					outs, catchflag = xchart(bat, pitch, basepath, score, inning, outs, batside, currentdefense)
+					print(f"CatchFlag = {catchflag}")
+					if catchflag == True:
+						box_score(bat, pitch, basepath, "AB")
+					print(hitlastname, "Defense X Chart")
+				else:
+					x = random.randint(1, 1000)
+					if x >= 333:
+						outs = gbC(bat, pitch, basepath, score, inning, outs)
+						box_score(bat, pitch, basepath, "AB")
+						print(lastname, "GroundoutC")
+					else:
+						outs = gbB(bat, pitch, basepath, score, inning, outs)
+						box_score(bat, pitch, basepath, "AB")
+						print(lastname, "GroundoutB")
+		
+			#print(lookup(pitch["ID"], "P"))
+		
+		# HITTER CARD
+		else:
+			batside = bat['Bats']
+			if batside == "S":
+				if pitch['Throws'] == "R":
+					batside = "L"
+				else:
+					batside = "R"
+			if batside == "R":
+				if (bat['s_bpvrhp'] == "w"):
+					diamond = -1
+				else:
+					diamond = int(bat['s_bpvrhp'])
+				k = bat['s_sovrhp']
+				bb = bat['s_bbvrhp']
+				hr = bat['s_hrvrhp']
+				hbp = bat['s_obvrhp'] - (bat['s_hitvrhp'] + bat['s_bbvrhp'])
+				si = bat['s_sivrhp']
+				do = bat['s_dovrhp']
+				tr = bat['s_trvrhp']
+				gidp = bat['s_dpvrhp']
+			else:
+				if (bat['s_bpvlhp'] == "w"):
+					diamond = -1
+				else:
+					diamond = int(bat['s_bpvlhp'])
+				k = bat['s_sovlhp']
+				bb = bat['s_bbvlhp']
+				hr = bat['s_hrvlhp']
+				hbp = bat['s_obvlhp'] - (bat['s_hitvlhp'] + bat['s_bbvlhp'])
+				si = bat['s_sivlhp']
+				do = bat['s_dovlhp']
+				tr = bat['s_trvlhp']
+				gidp = bat['s_dpvlhp']
+		
+			lastname = bat['LastName']
+			id = bat['ID']
+		
+			scope = [k, 
+			(k + bb), 
+			(bb + si),
+			(bb + si + hbp), 
+			(bb + si + hbp + hr),
+			(bb + si + hbp + hr + gidp),
+			(bb + si + hbp + hr + gidp + do),
+			(bb + si + hbp + hr + gidp + do + tr)
+			]
+
+			
+			diamondx = random.randint(1, 108)
+			diamondcheck = True
+			if diamondx <= diamond:
+				if random.randint(1,20) < 11:
+					homerun(bat, pitch, basepath, score, inning)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					box_score(bat, pitch, basepath, "HR")
+					box_score(bat, pitch, basepath, "RBI")
+					print(lastname, "*Home Run")
+				else:
+					box_score(bat, pitch, basepath, "AB")
+					print(lastname, "*Fly Out")
+					outs += 1
+				diamondcheck = False
+			elif diamondx < (diamond + 8) and diamondx > diamond:
+				if random.randint(1,20) < 11:
+					outs = single(bat, pitch, basepath, True, score, inning, outs, batside, currentdefense)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					print(lastname, "*Single")
+				else:
+					box_score(bat, pitch, basepath, "AB")
+					print(lastname, "*Groundout")
+					outs += 1
+				diamondcheck = False
+		
+			if diamondcheck:
+				if x > 0 and x <= scope[0]:
+					box_score(bat, pitch, basepath, "AB")
+					print(lastname, "Strikeout")
+					outs += 1
+				elif x > scope[0] and x <= scope[1]:
+					walkhbp(bat, pitch, basepath, score, inning)
+					box_score(bat, pitch, basepath, "BB")
+					print(lastname, "Walk")
+				elif x > scope[1] and x <= scope[2]:
+					outs = single(bat, pitch, basepath, False, score, inning, outs, batside, currentdefense)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					print(lastname, "Single")
+				elif x > scope[2] and x <= scope[3]:
+					walkhbp(bat, pitch, basepath, score, inning)
+					print(lastname, "Hit by Pitch")
+				elif x > scope[3] and x <= scope[4]:
+					homerun(bat, pitch, basepath, score, inning)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					box_score(bat, pitch, basepath, "HR")
+					box_score(bat, pitch, basepath, "RBI")
+					print(lastname, "Home Run")
+				elif x > scope[4] and x <= scope[5]:
+					outs = gbA(bat, pitch, basepath, score, inning, outs)
+					box_score(bat, pitch, basepath, "AB")
+					print(lastname, "GroundoutA")
+				elif x > scope[5] and x <= scope[6]:
+					outs = double(bat, pitch, basepath, False, score, inning, outs, batside, currentdefense)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					print(lastname, "Double")
+				elif x > scope[6] and x <= scope[7]:
+					triple(bat, pitch, basepath, score, inning)
+					box_score(bat, pitch, basepath, "AB")
+					box_score(bat, pitch, basepath, "H")
+					print(lastname, "Triple")
+				else:
+					x = random.randint(1, 1000)
+					if x <= 333:
+						outs = gbC(bat, pitch, basepath, score, inning, outs)
+						box_score(bat, pitch, basepath, "AB")
+						print(lastname, "GroundoutC")
+					else:
+						outs = gbB(bat, pitch, basepath, score, inning, outs)
+						box_score(bat, pitch, basepath, "AB")
+						print(lastname, "GroundoutB")
+
+		if catchflag == True:
+			nocatch = False
+
+	return outs
+			
 		#print(lookup(bat['ID'], 'H'))
 
 def single(bat, pitch, basepath, onetick, score, inning, outs, batside, currentdefense):
@@ -605,7 +725,7 @@ def stealing(outs, currentdefense):
 			       	dicenumbers.extend(range(int(start), int(end) + 1))
 			    else:
 			        dicenumbers.append(int(part))
-			print(dicenumbers)
+			#print(dicenumbers)
 
 			tostealfirst = int(paramfirst) - int(pitchcatch) - 2
 			tostealsecond = int(paramsecond) - int(pitchcatch) - 4
@@ -618,12 +738,12 @@ def stealing(outs, currentdefense):
 					basepath[1] = basepath[0]
 					basepath[0] = 0
 					print("Stole Second Base")
-					print(lookup(basepath[0],"H", "LastName"), lookup(basepath[1],"H", "LastName"), lookup(basepath[2],"H", "LastName"))
+					#print(lookup(basepath[0],"H", "LastName"), lookup(basepath[1],"H", "LastName"), lookup(basepath[2],"H", "LastName"))
 				else:
 					basepath[0] = 0
 					outs += 1
 					print("Caught Stealing Second Base")
-					print(lookup(basepath[0],"H", "LastName"), lookup(basepath[1],"H", "LastName"), lookup(basepath[2],"H", "LastName"))
+					#print(lookup(basepath[0],"H", "LastName"), lookup(basepath[1],"H", "LastName"), lookup(basepath[2],"H", "LastName"))
 
 	elif basepath[1] > 0 and basepath[2] == 0 and random.randint(1, 100) <= 20:
 		for y in currentdefense:
@@ -654,7 +774,7 @@ def stealing(outs, currentdefense):
 					dicenumbers.extend(range(int(start), int(end) + 1))
 				else:
 					dicenumbers.append(int(part))
-			print(dicenumbers)
+			#print(dicenumbers)
 
 			tostealsecond = int(paramsecond) - int(pitchcatch) - 4
 
@@ -666,12 +786,12 @@ def stealing(outs, currentdefense):
 					basepath[2] = basepath[1]
 					basepath[1] = 0
 					print("Stole Third Base")
-					print(lookup(basepath[0],"H", "LastName"), lookup(basepath[1],"H", "LastName"), lookup(basepath[2],"H", "LastName"))
+					#print(lookup(basepath[0],"H", "LastName"), lookup(basepath[1],"H", "LastName"), lookup(basepath[2],"H", "LastName"))
 				else:
 					basepath[1] = 0
 					outs += 1
 					print("Caught Stealing Third Base")
-					print(lookup(basepath[0],"H", "LastName"), lookup(basepath[1],"H", "LastName"), lookup(basepath[2],"H", "LastName"))
+					#print(lookup(basepath[0],"H", "LastName"), lookup(basepath[1],"H", "LastName"), lookup(basepath[2],"H", "LastName"))
 	return outs
 
 def gbC(bat, pitch, basepath, score, inning, outs):
@@ -705,7 +825,6 @@ def gbC(bat, pitch, basepath, score, inning, outs):
 
 	return outs
 
-
 def gbB(bat, pitch, basepath, score, inning, outs):
 	if basepath[2] > 0 and basepath[1] > 0 and basepath[0] > 0:
 		runscored(basepath[2], score, inning)
@@ -733,7 +852,6 @@ def gbB(bat, pitch, basepath, score, inning, outs):
 	outs += 1
 
 	return outs
-
 
 def gbA(bat, pitch, basepath, score, inning, outs):
 	dp = False
@@ -776,8 +894,38 @@ def gbA(bat, pitch, basepath, score, inning, outs):
 
 	return outs
 
+def pbwp(bat, pitch, basepath, score, inning, outs):
+	if basepath[2] > 0 and basepath[1] > 0 and basepath[0] > 0:
+		runscored(basepath[2], score, inning)
+		basepath[2] = basepath[1]
+		basepath[1] = basepath[0]
+		basepath[0] = 0
+	elif basepath[2] > 0 and basepath[1] == 0 and basepath[0] > 0:
+		runscored(basepath[2], score, inning)
+		basepath[1] = basepath[0]
+		basepath[0] = 0
+	elif basepath[2] > 0 and basepath[1] > 0 and basepath[0] == 0:
+		runscored(basepath[2], score, inning)
+		basepath[2] = basepath[1]
+		basepath[1] = 0
+	elif basepath[2] == 0 and basepath[1] > 0 and basepath[0] > 0:
+		basepath[2] = basepath[1]
+		basepath[1] = basepath[0]
+		basepath[0] = 0
+	elif basepath[2] == 0 and basepath[1] > 0 and basepath[0] == 0:
+		basepath[2] = basepath[1]
+		basepath[1] = 0
+		basepath[0] = 0
+	elif basepath[2] == 0 and basepath[1] == 0 and basepath[0] > 0:
+		basepath[1] = basepath[0]
+		basepath[0] = 0
+	else:
+		basepath[0] = 0
+
+	return outs
 
 def xchart(bat, pitch, basepath, score, inning, outs, batside, currentdefense):
+	catchflag = True
 	#positionshort = bat['Postion'].lower()
 	x = random.randint(1, 30)
 	rangerating = str(random.randint(1,5))
@@ -798,7 +946,17 @@ def xchart(bat, pitch, basepath, score, inning, outs, batside, currentdefense):
 		result = defenseratingjson["c"][rangerating][rangeratingroll]
 		if result == "e":
 			result = eratingjson["c"][eratingrat][eratingroll]
-		print(f"Catcher X - {lastname} - {result}")
+
+		if result == "pb":
+			label = "Pass Ball"
+		elif result == "wp":
+			label = "Wild Pitch"
+		elif result == "fo":
+			label = "Foul Out"
+		else:
+			label = result
+
+		print(f"Catcher X - {lastname} - {label}")
 	elif x == 4:
 		for player in currentdefense:
 		    if player["Position"] == "1b":
@@ -916,19 +1074,48 @@ def xchart(bat, pitch, basepath, score, inning, outs, batside, currentdefense):
 		outs = gbB(bat, pitch, basepath, score, inning, outs)
 	elif "gbC" in result:
 		outs = gbC(bat, pitch, basepath, score, inning, outs)
-
+	elif ("pb" in result) or ("wp" in result):
+		outs = pbwp(bat, pitch, basepath, score, inning, outs) 
+		catchflag = False
+	elif "fo" in result:
+		outs += 1
 	else:
 		print("X Rating - Out")
 
-	return outs
-
-
+	return outs, catchflag
 
 def runscored(runner, score, inning):	
 	print("*** RUN SCORED ***")
 	trueinning = inning - 1
 	score[trueinning] = score[trueinning] + 1
+	box_score(runner,"0","0","R")
 
+def box_score(bat, pitch, basepath, category):
+	if category == "R":
+		for x in home_hitting_box:
+			if x['ID'] == bat:
+				x[category] += 1
+				print(f"{x['FirstName']} {x['LastName']} - {category}: {x[category]}")
+				return
+
+		for y in away_hitting_box:
+			if y['ID'] == bat:
+				y[category] += 1
+				print(f"{y['FirstName']} {y['LastName']} - {category}: {y[category]}")
+				return
+
+	else:	
+		for x in home_hitting_box:
+			if x['ID'] == bat['ID']:
+				x[category] += 1
+				print(f"{x['FirstName']} {x['LastName']} - {category}: {x[category]}")
+				return
+
+		for y in away_hitting_box:
+			if y['ID'] == bat['ID']:
+				y[category] += 1
+				print(f"{y['FirstName']} {y['LastName']} - {category}: {y[category]}")
+				return
 
 #print(data[0]['FirstName'] + ' ' + data[0]['LastName'])
 #print(data[0]['s_mlbteam'][1])        # Gotham Knights
@@ -957,16 +1144,29 @@ homeb9 = homedata[8]
 
 homelineup = []
 awaylineup = []
+home_hitting_box = []
+away_hitting_box = []
+home_pitching_box = []
+away_pitching_box = []
 count = 0
 while count < 9:
 	homelineup.append(homedata[count])
 	awaylineup.append(awaydata[count])
+	hometemplate = {"ID": homelineup[count]['ID'], "FirstName": homelineup[count]['FirstName'], "LastName": homelineup[count]['LastName'], "AB": 0, "H": 0, "R": 0, "RBI": 0, "HR": 0, "2B": 0, "3B": 0, "SB": 0, "CS": 0, "E": 0, "BB": 0, "SO": 0}
+	awaytemplate = {"ID": awaylineup[count]['ID'], "FirstName": awaylineup[count]['FirstName'], "LastName": awaylineup[count]['LastName'], "AB": 0, "H": 0, "R": 0, "RBI": 0, "HR": 0, "2B": 0, "3B": 0, "SB": 0, "CS": 0, "E": 0, "BB": 0, "SO": 0}
+	home_hitting_box.append(hometemplate)
+	away_hitting_box.append(awaytemplate)
 	count = count + 1
+
 
 homepitcher = homepitch[0]
 awaypitcher = awaypitch[0]
 homepitcher['Position'] = "P"
 awaypitcher['Position'] = "P"
+hometemplate = {"ID": homepitcher['ID'], "FirstName": homepitcher['FirstName'], "LastName": homepitcher['LastName'], "IP": 0, "H": 0, "R": 0, "ER": 0, "HR": 0, "SO": 0, "BB": 0}
+awaytemplate = {"ID": awaypitcher['ID'], "FirstName": awaypitcher['FirstName'], "LastName": awaypitcher['LastName'], "IP": 0, "H": 0, "R": 0, "ER": 0, "HR": 0, "SO": 0, "BB": 0}
+home_pitching_box.append(hometemplate)
+away_pitching_box.append(awaytemplate)
 #print(homelineup[1])
 
 #home_defense = []
@@ -989,6 +1189,7 @@ away_defense = [{"ID": 554, "FirstName": "Jim", "LastName": "Thome", "Position":
 				{"ID": 158, "FirstName": "Willie", "LastName": "Davis", "Position": "cf", "Range": 2, "ERating": 8, "Arm": -1},
 				{"ID": 269, "FirstName": "Bobby", "LastName": "Higginson", "Position": "lf", "Range": 2, "ERating": 9, "Arm": -2}
 				]
+
 
 current_defense = []
 for x in homelineup:
@@ -1080,11 +1281,25 @@ while inning < 10:
 		
 #108 dice chances
 
+print("")
+print("----------------------------------------------------")
+print("")
+print(f"{'INNING':<2}{'1':>2}{'2':>2}{'3':>2}{'4':>2}{'5':>2}{'6':>2}{'7':>2}{'8':>2}{'9':>2}{'R':>4}")
+print(f"{'AWAY':<6}{awayscore[0]:>2}{awayscore[1]:>2}{awayscore[2]:>2}{awayscore[3]:>2}{awayscore[4]:>2}{awayscore[5]:>2}{awayscore[6]:>2}{awayscore[7]:>2}{awayscore[8]:>2}{sum(awayscore):>4}")
+print(f"{'HOME':<6}{homescore[0]:>2}{homescore[1]:>2}{homescore[2]:>2}{homescore[3]:>2}{homescore[4]:>2}{homescore[5]:>2}{homescore[6]:>2}{homescore[7]:>2}{homescore[8]:>2}{sum(homescore):>4}")
+print("")
+print("-----------------    BOX SCORE    ------------------")
+print("")
+print(f"{'PLAYER':<25}{'AB':>4}{'R':>4}{'H':>4}{'RBI':>5}{'HR':>4}")
+for player in away_hitting_box:
+    print(f"{player['LastName']:<25}{player['AB']:>4}{player['R']:>4}{player['H']:>4}{player['RBI']:>5}{player['HR']:>4}")
 
+print(" ")
+print(" ")
 
-
-
-
+print(f"{'PLAYER':<25}{'AB':>4}{'R':>4}{'H':>4}{'RBI':>5}{'HR':>4}")
+for player in home_hitting_box:
+    print(f"{player['LastName']:<25}{player['AB']:>4}{player['R']:>4}{player['H']:>4}{player['RBI']:>5}{player['HR']:>4}")
 
 	
 

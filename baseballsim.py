@@ -23,6 +23,84 @@ with open("e_rating.json", "r", encoding="utf-8") as file:
 basepath = [0,0,0]
 
 
+def getlineup(jsondata, lineup, pitcherarm, pitcherbalance):
+	positions = ["C", "1B", "2B", "SS", "3B", "LF", "CF", "RF", "DH"]
+	stratpositions = ["s_ca", "s_1b", "s_2b", "s_ss","s_3b", "s_lf", "s_cf", "s_rf", "s_dh"]
+	count = 0
+	while count < 9:
+		fillin = [{"ID": 0, "Position": "", "Bats": "", "s_bal": "E", "s_obtbvr": 0, "s_obtbvl": 0, "s_ca": 599, "s_1b": 599, "s_2b": 599, "s_ss": 599, "s_3b": 599, "s_lf": 599, "s_cf": 599, "s_rf": 599}]
+		lineup = lineup_assignposition(lineup, jsondata, pitcherarm, pitcherbalance, fillin, positions[count], stratpositions[count])
+		count += 1
+	'''
+	for player in jsondata:
+		if player["s_ca"] != None and player['Position'] == "":
+			lineup = lineup_assignposition(lineup, player, pitcherarm, pitcherbalance, fillin, "C")
+		elif player["s_1b"] != None and player['Position'] == "":
+			lineup = lineup_assignposition(lineup, player, pitcherarm, pitcherbalance, fillin, "1B")
+		elif player["s_2b"] != None and player['Position'] == "":
+			lineup = lineup_assignposition(lineup, player, pitcherarm, pitcherbalance, fillin, "2B")
+		elif player["s_ss"] != None and player['Position'] == "":
+			lineup = lineup_assignposition(lineup, player, pitcherarm, pitcherbalance, fillin, "SS")
+		elif player["s_3b"] != None and player['Position'] == "":
+			lineup = lineup_assignposition(lineup, player, pitcherarm, pitcherbalance, fillin, "3B")
+		elif player["s_lf"] != None and player['Position'] == "":
+			lineup = lineup_assignposition(lineup, player, pitcherarm, pitcherbalance, fillin, "LF")
+		elif player["s_cf"] != None and player['Position'] == "":
+			lineup = lineup_assignposition(lineup, player, pitcherarm, pitcherbalance, fillin, "CF")
+		elif player["s_rf"] != None and player['Position'] == "":
+			lineup = lineup_assignposition(lineup, player, pitcherarm, pitcherbalance, fillin, "RF")
+	'''
+	return lineup
+	#lineup.append(player)
+
+
+def lineup_assignposition(lineup, jsondata, pitcherarm, pitcherbalance, fillin, position, stratposition):
+	if position != "DH":
+		while fillin[0]['ID'] == 0:
+			for player in jsondata:
+				if player[stratposition] != None and player['Position'] == "":
+					if (position == "1B" or position == "LF" or position == "RF" or position == "C") and player[stratposition] < 415:
+						if pitcherarm == "L":
+							if (fillin[0][stratposition] >= 300 and (player['s_obtbvl'] - fillin[0]['s_obtbvl'] >= 25)) or (fillin[0][stratposition] < 300 and ((player['s_obtbvl'] - fillin[0]['s_obtbvl']) >= 10)):
+								fillin[0] = player
+						else:
+							if (fillin[0][stratposition] >= 300 and (player['s_obtbvr'] - fillin[0]['s_obtbvr'] >= 25)) or (fillin[0][stratposition] < 300 and ((player['s_obtbvr'] - fillin[0]['s_obtbvr']) >= 10)):
+								fillin[0] = player
+					elif (position == "2B" or position == "SS" or position == "3B" or position == "CF") and player[stratposition] < 310:
+						if pitcherarm == "R":
+							if (fillin[0][stratposition] >= 300 and (player['s_obtbvl'] - fillin[0]['s_obtbvl'] >= 25)) or (fillin[0][stratposition] < 225 and ((player['s_obtbvl'] - fillin[0]['s_obtbvl']) >= 10)):
+								fillin[0] = player
+						else:
+							if (fillin[0][stratposition] >= 300 and (player['s_obtbvr'] - fillin[0]['s_obtbvr'] >= 25)) or (fillin[0][stratposition] < 225 and ((player['s_obtbvr'] - fillin[0]['s_obtbvr']) >= 10)):
+								fillin[0] = player
+					else:
+						if (fillin[0]['ID'] == 0):
+							fillin[0] = player
+			if fillin[0]['ID'] == 0:
+				print(f"{position} - Failed to find hitter")
+				fillin[0]['ID'] = 100000
+
+	else:
+		for player in jsondata:
+			print(f"DH CHECK - Position: {player['Position']} - PitcherArm: {pitcherarm} - Fillin: {fillin[0]['s_obtbvl']} - Player: {player['s_obtbvl']}")
+			if player['Position'] == "" and pitcherarm == "L" and fillin[0]['s_obtbvl'] < player['s_obtbvl']:
+				fillin[0] = player
+			elif player['Position'] == "" and pitcherarm == "R" and fillin[0]['s_obtbvr'] < player['s_obtbvr']:
+				fillin[0] = player
+		if fillin[0]['ID'] == 0:
+			print(f"{position} - Failed to find hitter")
+	
+
+
+	for player in jsondata:
+		if player['ID'] == fillin[0]['ID']:
+			player['Position'] = position
+			lineup.append(player)
+
+
+	return lineup
+
+
 def extrabases(player):
 	# AGAINST RIGHT-HANDED PITCHERS
 
@@ -205,6 +283,8 @@ def defenseformation(player):
 	return defensearray
     
 def diceroll (bat, pitch, score, inning, outs, currentdefense):
+	global pitchrolls, hitterrolls
+
 	nocatch = True
 	catchflag = True
 	while nocatch:
@@ -221,6 +301,9 @@ def diceroll (bat, pitch, score, inning, outs, currentdefense):
 		x = random.randint(1, 108)
 		# PITCHER CARD
 		if random.randint(1,1000) <= 500:
+			#pitchrolls += 1
+			#rollresult = "P" + str(x)
+			#pitchrollslist.append(rollresult)
 			if pitch['Throws'] == "R":
 				batside = "L"
 				if (pitch['s_bpvrhp'] == "w"):
@@ -230,8 +313,8 @@ def diceroll (bat, pitch, score, inning, outs, currentdefense):
 				k = pitch['s_sovrhp']
 				bb = pitch['s_bbvrhp']
 				si = pitch['s_sivrhp']
-				do = pitch['s_dovrhp']
-				tr = pitch['s_trvrhp']
+				do = round(pitch['s_dovrhp'], 1)
+				tr = round(pitch['s_trvrhp'], 1)
 				hr = pitch['s_hrvrhp']
 				gidp = pitch['s_dpvrhp']
 			else:
@@ -243,8 +326,8 @@ def diceroll (bat, pitch, score, inning, outs, currentdefense):
 				k = pitch['s_sovlhp']
 				bb = pitch['s_bbvlhp']
 				si = pitch['s_sivlhp']
-				do = pitch['s_dovlhp']
-				tr = pitch['s_trvlhp']
+				do = round(pitch['s_dovlhp'],1)
+				tr = round(pitch['s_trvlhp'],1)
 				hr = pitch['s_hrvlhp']
 				gidp = pitch['s_dpvlhp']
 			
@@ -254,13 +337,15 @@ def diceroll (bat, pitch, score, inning, outs, currentdefense):
 
 			scope = [k, 
 			(k + bb), 
-			(bb + si),
-			(bb + si + hr),
-			(bb + si + hr + gidp),
-			(bb + si + hr + gidp + do),
-			(bb + si + hr + gidp + do + tr),
-			(bb + si + hr + gidp + do + tr + defensex),
+			(k + bb + si),
+			(k + bb + si + hr),
+			(k + bb + si + hr + gidp),
+			(k + bb + si + hr + gidp + do),
+			(k + bb + si + hr + gidp + do + tr),
+			(k + bb + si + hr + gidp + do + tr + defensex),
 			]
+
+			#debuglist = [(k + bb), (k + bb + si), (k + bb + si + hr), (k + bb + si + hr + gidp), (k + bb + si + hr + gidp + do), (k + bb + si + hr + gidp + do + tr), (k + bb + si + hr + gidp + do + tr + defensex)]
 
 			
 			'''
@@ -360,6 +445,9 @@ def diceroll (bat, pitch, score, inning, outs, currentdefense):
 		
 		# HITTER CARD
 		else:
+			#hitterrolls += 1
+			#rollresult = "H" + str(x)
+			#hitterrollslist.append(rollresult)
 			batside = bat['Bats']
 			if batside == "S":
 				if pitch['Throws'] == "R":
@@ -398,13 +486,15 @@ def diceroll (bat, pitch, score, inning, outs, currentdefense):
 		
 			scope = [k, 
 			(k + bb), 
-			(bb + si),
-			(bb + si + hbp), 
-			(bb + si + hbp + hr),
-			(bb + si + hbp + hr + gidp),
-			(bb + si + hbp + hr + gidp + do),
-			(bb + si + hbp + hr + gidp + do + tr)
+			(k + bb + si),
+			(k + bb + si + hbp), 
+			(k + bb + si + hbp + hr),
+			(k + bb + si + hbp + hr + gidp),
+			(k + bb + si + hbp + hr + gidp + do),
+			(k + bb + si + hbp + hr + gidp + do + tr)
 			]
+
+			#debuglist = [(k + bb), (k + bb + si), (k + bb + si + hbp), (k + bb + si + hbp + hr), (k + bb + si + hbp + hr + gidp), (k + bb + si + hbp + hr + gidp + do), (k + bb + si + hbp + hr + gidp + do + tr)]
 
 			
 			diamondx = random.randint(1, 108)
@@ -1148,6 +1238,34 @@ home_hitting_box = []
 away_hitting_box = []
 home_pitching_box = []
 away_pitching_box = []
+#pitchrolls = 0
+#hitterrolls = 0
+#pitchrollslist = []
+#hitterrollslist = []
+
+homepitcher = homepitch[0]
+awaypitcher = awaypitch[0]
+homepitcher['Position'] = "P"
+awaypitcher['Position'] = "P"
+hometemplate = {"ID": homepitcher['ID'], "FirstName": homepitcher['FirstName'], "LastName": homepitcher['LastName'], "IP": 0, "H": 0, "R": 0, "ER": 0, "HR": 0, "SO": 0, "BB": 0}
+awaytemplate = {"ID": awaypitcher['ID'], "FirstName": awaypitcher['FirstName'], "LastName": awaypitcher['LastName'], "IP": 0, "H": 0, "R": 0, "ER": 0, "HR": 0, "SO": 0, "BB": 0}
+home_pitching_box.append(hometemplate)
+away_pitching_box.append(awaytemplate)
+
+for x in homedata:
+	#posstring = x['s_fielding'].split("-")
+	#x['Position'] = posstring[0].upper()
+	x['Position'] = ""
+	x = extrabases(x)
+for x in awaydata:
+	#posstring = x['s_fielding'].split("-")
+	#x['Position'] = posstring[0].upper()
+	x['Position'] = ""
+	x = extrabases(x)
+
+homelineup = getlineup(homedata, homelineup, awaypitcher['Throws'], awaypitcher['s_bal'])
+awaylineup = getlineup(awaydata, awaylineup, homepitcher['Throws'], homepitcher['s_bal'])
+#homelineup = []
 count = 0
 while count < 9:
 	homelineup.append(homedata[count])
@@ -1159,14 +1277,7 @@ while count < 9:
 	count = count + 1
 
 
-homepitcher = homepitch[0]
-awaypitcher = awaypitch[0]
-homepitcher['Position'] = "P"
-awaypitcher['Position'] = "P"
-hometemplate = {"ID": homepitcher['ID'], "FirstName": homepitcher['FirstName'], "LastName": homepitcher['LastName'], "IP": 0, "H": 0, "R": 0, "ER": 0, "HR": 0, "SO": 0, "BB": 0}
-awaytemplate = {"ID": awaypitcher['ID'], "FirstName": awaypitcher['FirstName'], "LastName": awaypitcher['LastName'], "IP": 0, "H": 0, "R": 0, "ER": 0, "HR": 0, "SO": 0, "BB": 0}
-home_pitching_box.append(hometemplate)
-away_pitching_box.append(awaytemplate)
+
 #print(homelineup[1])
 
 #home_defense = []
@@ -1296,10 +1407,23 @@ for player in away_hitting_box:
 
 print(" ")
 print(" ")
+print(" ")
 
 print(f"{'PLAYER':<25}{'AB':>4}{'R':>4}{'H':>4}{'RBI':>5}{'HR':>4}")
 for player in home_hitting_box:
     print(f"{player['LastName']:<25}{player['AB']:>4}{player['R']:>4}{player['H']:>4}{player['RBI']:>5}{player['HR']:>4}")
 
-	
+'''	
+print(" ")
+print(" ")
 
+print(f"Pitcher Rolls {pitchrolls}")
+print("")
+print(pitchrollslist)
+print("")
+print("-------------------")
+print("")
+print(f"Hitter Rolls {hitterrolls}")
+print("")
+print(hitterrollslist)
+'''

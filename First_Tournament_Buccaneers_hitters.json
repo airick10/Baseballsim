@@ -5,6 +5,9 @@
     "LastName": "Ruth",
     "Nickname": "Babe",
     "Team": "NYY",
+    "Lineup": [
+      3,4
+    ],
     "Height": "6'2",
     "Weight_lb": 215,
     "Bats": "L",
@@ -101,6 +104,9 @@
     "LastName": "Thome",
     "Nickname": "N/A",
     "Team": "CLE",
+    "Lineup": [
+      3,4,5,6
+    ],
     "Height": "6'4",
     "Weight_lb": 250,
     "Bats": "L",
@@ -197,6 +203,9 @@
     "LastName": "Killebrew",
     "Nickname": "Killer",
     "Team": "MIN",
+    "Lineup": [
+      3,4,5,6
+    ],
     "Height": "6'0",
     "Weight_lb": 195,
     "Bats": "R",
@@ -293,6 +302,9 @@
     "LastName": "Seager",
     "Nickname": "Seags",
     "Team": "LA",
+    "Lineup": [
+      2,3,6,7
+    ],
     "Height": "6'3",
     "Weight_lb": 215,
     "Bats": "L",
@@ -389,6 +401,9 @@
     "LastName": "Tettleton",
     "Nickname": "Froot Loops",
     "Team": "DET",
+    "Lineup": [
+      6,7,8,9
+    ],
     "Height": "6'2",
     "Weight_lb": 200,
     "Bats": "S",
@@ -485,6 +500,9 @@
     "LastName": "Ramos",
     "Nickname": "Willy",
     "Team": "WSH",
+    "Lineup": [
+      8,9
+    ],
     "Height": "6'1",
     "Weight_lb": 241,
     "Bats": "R",
@@ -581,6 +599,9 @@
     "LastName": "Chisholm, Jr.",
     "Nickname": "N/A",
     "Team": "FLA",
+    "Lineup": [
+      2,7,8,9
+    ],
     "Height": "5'11",
     "Weight_lb": 184,
     "Bats": "L",
@@ -642,7 +663,7 @@
     "s_bpvrhp": "8",
     "s_clvrhp": -5,
     "s_dpvrhp": 0,
-    "s_stealing": "*2-6,12 (19-15)",
+    "s_stealing": "*2-6,12/- (19-15)",
     "s_stl": "AA",
     "s_spd": 15,
     "s_b": "C",
@@ -677,6 +698,9 @@
     "LastName": "Galarraga",
     "Nickname": "Big Cat",
     "Team": "MON",
+    "Lineup": [
+      4,5,6,7
+    ],
     "Height": "6'3",
     "Weight_lb": 235,
     "Bats": "R",
@@ -773,6 +797,9 @@
     "LastName": "Mitchell",
     "Nickname": "World",
     "Team": "SF",
+    "Lineup": [
+      5,6,7
+    ],
     "Height": "5'10",
     "Weight_lb": 186,
     "Bats": "R",
@@ -869,6 +896,9 @@
     "LastName": "Martinez",
     "Nickname": "Bamtino",
     "Team": "NYY",
+    "Lineup": [
+      6,7,8
+    ],
     "Height": "6'2",
     "Weight_lb": 205,
     "Bats": "L",
@@ -965,6 +995,9 @@
     "LastName": "Reynolds",
     "Nickname": "",
     "Team": "PIT",
+    "Lineup": [
+      2,6,7,8
+    ],
     "Height": "6'2",
     "Weight_lb": 205,
     "Bats": "S",
@@ -1061,6 +1094,9 @@
     "LastName": "Davis",
     "Nickname": "3-Dog",
     "Team": "LA",
+    "Lineup": [
+      1,2,8,9
+    ],
     "Height": "6'2",
     "Weight_lb": 180,
     "Bats": "L",
@@ -1157,6 +1193,9 @@
     "LastName": "Higginson",
     "Nickname": "N/A",
     "Team": "DET",
+    "Lineup": [
+      7,8,9
+    ],
     "Height": "5'11",
     "Weight_lb": 180,
     "Bats": "L",
@@ -1253,6 +1292,9 @@
     "LastName": "Maldonado",
     "Nickname": "N/A",
     "Team": "LA",
+    "Lineup": [
+      7,8
+    ],
     "Height": "6'0",
     "Weight_lb": 185,
     "Bats": "R",
@@ -1349,6 +1391,9 @@
     "LastName": "Keeler",
     "Nickname": "Wee Willie",
     "Team": "LA",
+    "Lineup": [
+      2,3
+    ],
     "Height": "5'4",
     "Weight_lb": 140,
     "Bats": "L",

@@ -5,6 +5,9 @@
     "LastName": "Banks",
     "Nickname": "Mr. Cub",
     "Team": "CHC",
+    "Lineup": [
+      3,4,5,6
+    ],
     "Height": "6'1",
     "Weight_lb": 180,
     "Bats": "R",
@@ -101,6 +104,9 @@
     "LastName": "Alvarez",
     "Nickname": "Air Yordan",
     "Team": "HOU",
+    "Lineup": [
+      2,3,4,5
+    ],
     "Height": "6'4",
     "Weight_lb": 237,
     "Bats": "L",
@@ -197,6 +203,9 @@
     "LastName": "Belle",
     "Nickname": "Joey",
     "Team": "CLE",
+    "Lineup": [
+      3,4,5,6
+    ],
     "Height": "6'1",
     "Weight_lb": 190,
     "Bats": "R",
@@ -293,6 +302,9 @@
     "LastName": "Sandberg",
     "Nickname": "Ryno",
     "Team": "CHC",
+    "Lineup": [
+      2,3,6
+    ],
     "Height": "6'1",
     "Weight_lb": 175,
     "Bats": "R",
@@ -389,6 +401,9 @@
     "LastName": "Kendall",
     "Nickname": "N/A",
     "Team": "PIT",
+    "Lineup": [
+      1,2,8,9
+    ],
     "Height": "6'0",
     "Weight_lb": 181,
     "Bats": "R",
@@ -485,6 +500,9 @@
     "LastName": "Rose",
     "Nickname": "Charlie Hustle",
     "Team": "CIN",
+    "Lineup": [
+      1,2
+    ],
     "Height": "5'11",
     "Weight_lb": 192,
     "Bats": "S",
@@ -581,6 +599,9 @@
     "LastName": "González",
     "Nickname": "Juan Gone",
     "Team": "TEX",
+    "Lineup": [
+      3,4,5,6
+    ],
     "Height": "6'3",
     "Weight_lb": 175,
     "Bats": "R",
@@ -677,6 +698,9 @@
     "LastName": "Vaughn",
     "Nickname": "Hit Dog",
     "Team": "BOS",
+    "Lineup": [
+      4,5,6,7
+    ],
     "Height": "6'1",
     "Weight_lb": 225,
     "Bats": "L",
@@ -773,6 +797,9 @@
     "LastName": "Butler",
     "Nickname": "Bugsy",
     "Team": "LA",
+    "Lineup": [
+      1,2,9
+    ],
     "Height": "5'10",
     "Weight_lb": 160,
     "Bats": "L",
@@ -869,6 +896,9 @@
     "LastName": "Johnson",
     "Nickname": "N/A",
     "Team": "NEG",
+    "Lineup": [
+      3,4,5,6
+    ],
     "Height": "5'11",
     "Weight_lb": 150,
     "Bats": "R",
@@ -965,6 +995,9 @@
     "LastName": "Realmuto",
     "Nickname": "Real",
     "Team": "PHI",
+    "Lineup": [
+      6,7,8
+    ],
     "Height": "6'0",
     "Weight_lb": 212,
     "Bats": "R",
@@ -1061,6 +1094,9 @@
     "LastName": "Rendon",
     "Nickname": "Tony Two Bags",
     "Team": "WSH",
+    "Lineup": [
+      7,8,9
+    ],
     "Height": "6'1",
     "Weight_lb": 200,
     "Bats": "R",
@@ -1157,6 +1193,9 @@
     "LastName": "Cruz",
     "Nickname": "Boomstick",
     "Team": "TEX",
+    "Lineup": [
+      5,6,7
+    ],
     "Height": "6'2",
     "Weight_lb": 230,
     "Bats": "R",
@@ -1253,6 +1292,9 @@
     "LastName": "Hamilton",
     "Nickname": "",
     "Team": "CIN",
+    "Lineup": [
+      1,9
+    ],
     "Height": "6'0",
     "Weight_lb": 160,
     "Bats": "R",
@@ -1349,6 +1391,9 @@
     "LastName": "Surhoff",
     "Nickname": "N/A",
     "Team": "MIL",
+    "Lineup": [
+      7,8,9
+    ],
     "Height": "6'1",
     "Weight_lb": 185,
     "Bats": "L",

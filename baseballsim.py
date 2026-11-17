@@ -24,6 +24,7 @@ basepath = [0,0,0]
 
 
 def getlineup(jsondata, lineup, pitcherarm, pitcherbalance):
+	lineuporder = []
 	positions = ["C", "1B", "2B", "SS", "3B", "LF", "CF", "RF", "DH"]
 	stratpositions = ["s_ca", "s_1b", "s_2b", "s_ss","s_3b", "s_lf", "s_cf", "s_rf", "s_dh"]
 	count = 0
@@ -31,6 +32,7 @@ def getlineup(jsondata, lineup, pitcherarm, pitcherbalance):
 		fillin = [{"ID": 0, "Position": "", "Bats": "", "s_bal": "E", "s_obtbvr": 0, "s_obtbvl": 0, "s_ca": 599, "s_1b": 599, "s_2b": 599, "s_ss": 599, "s_3b": 599, "s_lf": 599, "s_cf": 599, "s_rf": 599}]
 		lineup = lineup_assignposition(lineup, jsondata, pitcherarm, pitcherbalance, fillin, positions[count], stratpositions[count])
 		count += 1
+	
 	'''
 	for player in jsondata:
 		if player["s_ca"] != None and player['Position'] == "":
@@ -50,9 +52,45 @@ def getlineup(jsondata, lineup, pitcherarm, pitcherbalance):
 		elif player["s_rf"] != None and player['Position'] == "":
 			lineup = lineup_assignposition(lineup, player, pitcherarm, pitcherbalance, fillin, "RF")
 	'''
-	return lineup
-	#lineup.append(player)
 
+	count = 1
+	while count < 10:
+		fillin = [{"ID": 0, "Position": "", "Bats": "", "s_bal": "E", "s_obtbvr": 0, "s_obvrhp": 0, "s_obtbvl": 0, 
+		"s_obvlhp": 0, "s_spd": 0, "s_hitvlhp": 0, 's_dpvlhp': 100, "s_hitvrhp": 0, 's_dpvrhp': 100, "s_hrvlhp": 0,
+		"s_hrvrhp": 0, "x": 0, "Lineup": 0}]
+		#print("COUNT:", count)
+		#print("LINEUP:", lineuporder)
+		if count == 1:
+			previousbat = "X"
+		else:
+			previousbat = lineuporder[-1]["Bats"]
+
+		if count == 1:
+			player = lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, "s_spd", "s_obvlhp", "s_obvrhp", "x", "x", "x", "x")
+		elif count == 2:
+			player = lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, "s_spd", "s_hitvlhp", "s_hitvrhp", "s_dpvlhp", "s_dpvrhp", "x", "x")
+		elif count == 3:
+			player = lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, "s_spd", "s_obtbvl", "s_obtbvr", "x", "x", "x", "x")
+		elif count == 4:
+			player = lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, "s_spd", "s_obtbvl", "s_obtbvr", "x", "x", "x", "x")
+		elif count == 5:
+			player = lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, "s_spd", "s_obtbvl", "s_obtbvr", "x", "x", "x", "x")
+		elif count == 6:
+			player = lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, "s_spd", "s_obtbvl", "s_obtbvr", "x", "x", "x", "x")
+		elif count == 7:
+			player = lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, "s_spd", "s_obtbvl", "s_obtbvr", "x", "x", "x", "x")
+		elif count == 8:
+			player = lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, "s_spd", "s_obtbvl", "s_obtbvr", "x", "x", "x", "x")
+		elif count == 9:
+			player = lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, "s_spd", "s_obtbvl", "s_obtbvr", "x", "x", "x", "x")
+		#print("SELECTED:", count, player['LastName'] if player else None)
+		if player is not None:
+			lineuporder.append(player)
+		count += 1
+
+
+	return lineuporder
+	#lineup.append(player)
 
 def lineup_assignposition(lineup, jsondata, pitcherarm, pitcherbalance, fillin, position, stratposition):
 	if position != "DH":
@@ -82,7 +120,7 @@ def lineup_assignposition(lineup, jsondata, pitcherarm, pitcherbalance, fillin, 
 
 	else:
 		for player in jsondata:
-			print(f"DH CHECK - Position: {player['Position']} - PitcherArm: {pitcherarm} - Fillin: {fillin[0]['s_obtbvl']} - Player: {player['s_obtbvl']}")
+			#print(f"DH CHECK - Position: {player['Position']} - PitcherArm: {pitcherarm} - Fillin: {fillin[0]['s_obtbvl']} - Player: {player['s_obtbvl']}")
 			if player['Position'] == "" and pitcherarm == "L" and fillin[0]['s_obtbvl'] < player['s_obtbvl']:
 				fillin[0] = player
 			elif player['Position'] == "" and pitcherarm == "R" and fillin[0]['s_obtbvr'] < player['s_obtbvr']:
@@ -100,6 +138,51 @@ def lineup_assignposition(lineup, jsondata, pitcherarm, pitcherbalance, fillin, 
 
 	return lineup
 
+def lineup_order(lineup, jsondata, lineuporder, pitcherarm, fillin, count, previousbat, spd, cat1l, cat1r, cat2l, cat2r, cat3l, cat3r):
+	for player in lineup:
+		if cat2l == "x" and cat2r == "x":
+			xl = 0
+			xr = 0
+		else:
+			xl = player[cat2l]
+			xr = player[cat2r]
+		if count in player['Lineup'] and not any(x['ID'] == player['ID'] for x in lineuporder):
+			x = random.randint(1, 100)
+			if (count < 3 or count > 7):
+				if x <= 20 and player['s_spd'] >= fillin[0]['s_spd']:
+					fillin[0] = player
+				#Note: get returns the second parameter '0', if cat2l does not exist as a key
+				elif pitcherarm == "L" and (player[cat1l] - xl) > (fillin[0][cat1l] - fillin[0].get(cat2l, 0)):
+					fillin[0] = player
+				elif pitcherarm == "R" and (player[cat1r] - xr) > (fillin[0][cat1r] - fillin[0].get(cat2r, 0)):
+					fillin[0] = player
+			elif (count > 2 and count < 6):
+				if x <= 20 and pitcherarm == "L" and player['s_hrvlhp'] >= fillin[0]['s_hrvlhp']:
+					fillin[0] = player
+				elif x <= 20 and pitcherarm == "R" and player['s_hrvrhp'] >= fillin[0]['s_hrvrhp']:
+					fillin[0] = player
+				elif pitcherarm == "L" and (player[cat1l] - xl) > (fillin[0][cat1l] - fillin[0].get(cat2l, 0)):
+					fillin[0] = player
+				elif pitcherarm == "R" and (player[cat1r] - xr) > (fillin[0][cat1r] - fillin[0].get(cat2r, 0)):
+					fillin[0] = player
+			else:
+				if pitcherarm == "L" and (player[cat1l] - xl) > (fillin[0][cat1l] - fillin[0].get(cat2l, 0)):
+					fillin[0] = player
+				elif pitcherarm == "R" and (player[cat1r] - xr) > (fillin[0][cat1r] - fillin[0].get(cat2r, 0)):
+					fillin[0] = player
+
+	if fillin[0]['ID'] == 0:
+		#print(f"Lineup Slot {count} - Failed to get player")
+		for player in lineup:
+			if not any(x['ID'] == player['ID'] for x in lineuporder):
+				if pitcherarm == "L" and player['s_obtbvl'] > fillin[0]['s_obtbvl']:
+					fillin[0] = player
+				elif pitcherarm == "R" and player['s_obtbvr'] > fillin[0]['s_obtbvr']:
+					fillin[0] = player
+
+	for player in lineup:
+		if player['ID'] == fillin[0]['ID']:
+			return player
 
 def extrabases(player):
 	# AGAINST RIGHT-HANDED PITCHERS
@@ -231,7 +314,6 @@ def extrabases(player):
 	player['s_trvlhp'] = triple
 
 	return player
-
     
 def lookup (x, type, category):
 	if type == "H":
